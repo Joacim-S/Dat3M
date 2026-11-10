@@ -1,0 +1,72 @@
+grammar LitmusAmd;
+
+main
+    :   (line? Newline)* line? EOF
+    ;
+
+line
+    :   directiveLine
+    |   instructionLine
+    ;
+
+directiveLine
+    :   Num scope Whitespace ScopeId
+    |   Num Check (Sat | Unsat)
+    ;
+
+instructionLine
+    :   AssignName opcode //Need to match anything until space or newline
+    ;
+
+opcode
+    :   Load
+    |   Store
+    ;
+
+scope
+    :   Agent
+    |   Cluster
+    |   Workgroup
+    |   Wave
+    |   Thread
+    ;
+
+Comment
+    :   Slash{2} ~[\r\n]* -> skip
+    ;
+
+AssignName : '$' Name Colon;
+DollarName : '$' Name;
+
+fragment
+Name
+    :   [A-Za-z][A-Za-z0-9_]*
+    ;
+
+Unsat   :   'unsat';
+Sat     :   'sat';
+
+Newline :   '\n';
+Num     :   '#';
+Dollar  :   '$';
+Colon   :   ':';
+Slash   :   '/';
+
+Check   :   'check';
+Load    :   'load';
+Store   :   'store';
+
+Agent       :   'agent';
+Cluster     :   'cluster';
+Workgroup   :   'workgroup';
+Wave        :   'wave';
+Thread      :   'thread';
+
+Whitespace
+    :   [ \t]+
+        -> skip
+    ;
+
+ScopeId
+    :   [A-Za-z0-9][A-Za-z0-9_]*
+    ;
