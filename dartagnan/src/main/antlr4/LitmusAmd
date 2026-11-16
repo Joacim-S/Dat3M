@@ -10,17 +10,26 @@ line
     ;
 
 directiveLine
-    :   Num scope Whitespace ScopeId
-    |   Num Check (Sat | Unsat)
+    :   Num scope scopeId
+    |   Num Check (Sat | Unsat) alloyCode?
+    |   Num Assert
+    |   Num Push alloyCode
+    |   Num Pop N?
+    ;
+
+alloyCode
+    : ~Newline+
     ;
 
 instructionLine
-    :   AssignName opcode //Need to match anything until space or newline
+    :   (Dollar Name Colon)? memop attributes? addr=~(Newline)
+    |   (Dollar Name Colon)? Fence attributes?
     ;
 
-opcode
+memop
     :   Load
     |   Store
+    |   Rmv
     ;
 
 scope
@@ -31,16 +40,40 @@ scope
     |   Thread
     ;
 
-Comment
-    :   Slash{2} ~[\r\n]* -> skip
+attributes
+    :   Dot mem_order (Dot syncscope)?
+    |   Dot syncscope Dot mem_order
     ;
 
-AssignName : '$' Name Colon;
-DollarName : '$' Name;
+syncscope
+    :   'ss=' scope
+    ;
 
-fragment
-Name
-    :   [A-Za-z][A-Za-z0-9_]*
+
+mem_order
+    :   Unordered
+    |   Monotonic
+    |   Acquire
+    |   Release
+    |   Acq_rel
+    |   Seq_cst
+    ;
+
+scopeId
+    :   Name
+    |   ScopeIdToken
+    |   N
+    ;
+
+Unordered   : 'unordered';
+Monotonic   : 'monotonic';
+Acquire     : 'acquire';
+Release     : 'release';
+Acq_rel     : 'acq_rel';
+Seq_cst     : 'seq_cst';
+
+Comment
+    :   Slash{2} ~[\r\n]* -> skip
     ;
 
 Unsat   :   'unsat';
@@ -51,22 +84,37 @@ Num     :   '#';
 Dollar  :   '$';
 Colon   :   ':';
 Slash   :   '/';
+Dot     :   '.';
 
 Check   :   'check';
+Assert  :   'assert';
+Push    :   'push';
+Pop     :   'pop';
+
+Fence   :   'fence';
+Rmv     :   'rmw';
 Load    :   'load';
 Store   :   'store';
 
-Agent       :   'agent';
-Cluster     :   'cluster';
-Workgroup   :   'workgroup';
-Wave        :   'wave';
-Thread      :   'thread';
+Agent       :   'agent'     | 'ag';
+Cluster     :   'cluster'   | 'cl';
+Workgroup   :   'workgroup' | 'wg';
+Wave        :   'wave'      | 'wf';
+Thread      :   'thread'    | 'st' | 'singlethread';
 
 Whitespace
     :   [ \t]+
         -> skip
     ;
 
-ScopeId
+N   : [0-9]+;
+
+Name
+    :   [A-Za-z][A-Za-z0-9_]*
+    ;
+
+ScopeIdToken
     :   [A-Za-z0-9][A-Za-z0-9_]*
     ;
+
+Any : . ;
